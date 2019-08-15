@@ -75,13 +75,14 @@ public class WorkerConfiguration {
     public Step workerStep() {
         return this.workerStepBuilderFactory.get("workerStep")
                 .inputChannel(requests())
-                .tasklet(tasklet(null))
+                .tasklet(tasklet(null, null))
                 .build();
     }
 
     @Bean
     @StepScope
-    public Tasklet tasklet(@Value("#{stepExecutionContext['partition']}") String partition) {
+    public Tasklet tasklet(@Value("#{stepExecutionContext['partition']}") String partition, @Value("#{jobParameters['some_key']}") String jobParameter) {
+        System.out.println("jobParameter is " + jobParameter);
         return (contribution, chunkContext) -> {
             System.out.println("processing " + partition);
             return RepeatStatus.FINISHED;

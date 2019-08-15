@@ -18,13 +18,17 @@ package my.batch.experiments.remote.partitioning.polling.master;
 import my.batch.experiments.remote.partitioning.BasicPartitioner;
 import my.batch.experiments.remote.partitioning.BrokerConfiguration;
 import org.apache.activemq.ActiveMQConnectionFactory;
-import org.springframework.batch.core.Job;
-import org.springframework.batch.core.Step;
+import org.springframework.batch.core.*;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
+import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
+import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
+import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
+import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.batch.integration.config.annotation.EnableBatchIntegration;
 import org.springframework.batch.integration.partition.RemotePartitioningMasterStepBuilderFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -32,6 +36,8 @@ import org.springframework.integration.channel.DirectChannel;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
 import org.springframework.integration.jms.dsl.Jms;
+
+import javax.annotation.PostConstruct;
 
 /**
  * This configuration class is for the master side of the remote partitioning sample.
@@ -95,4 +101,16 @@ public class MasterConfiguration {
                 .build();
     }
 
+    @Autowired
+    private Job remotePartitioningJob;
+    @Autowired
+    private JobLauncher jobLauncher;
+
+    @PostConstruct
+    public void myJobLauncher() throws JobParametersInvalidException, JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException {
+        JobParameters jobParameters = new JobParametersBuilder()
+                .addString("some_key", "some_value")
+                .toJobParameters();
+        jobLauncher.run(remotePartitioningJob, jobParameters);
+    }
 }
